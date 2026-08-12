@@ -21,6 +21,7 @@ export default function RecipeForm({
   onCreate,
   onUpdate,
   loading,
+  loadingAction,
   onClose,
 }) {
   const [title, setTitle] = useState('')
@@ -239,9 +240,17 @@ export default function RecipeForm({
       successful = await onCreate(recipeData)
     }
 
-    if (successful) {
-      resetForm()
+    if (!successful) {
+      setFormError(
+        isEditing
+          ? 'Unable to update recipe. Please try again.'
+          : 'Unable to create recipe. Please try again.'
+      )
+
+      return
     }
+
+    resetForm()
   }
 
   function resetForm() {
@@ -570,9 +579,15 @@ export default function RecipeForm({
                 }}
                 loading={loading}
               >
-                {isEditing
-                  ? 'Update Recipe'
-                  : 'Add Recipe'}
+                {loading
+                  ? loadingAction === 'create'
+                    ? 'Creating Recipe...'
+                    : loadingAction === 'update'
+                      ? 'Updating Recipe...'
+                      : 'Saving...'
+                  : isEditing
+                    ? 'Update Recipe'
+                    : 'Add Recipe'}
               </Button>
 
               <Button

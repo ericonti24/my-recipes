@@ -49,14 +49,16 @@ export default function RecipeCard({
   async function handleDelete() {
     setDeleting(true)
 
-    const deleted = await onDelete(recipe.id)
+    try {
+      const deleted = await onDelete(recipe.id)
 
-    if (deleted !== false) {
-      setShowDeleteConfirm(false)
-      setShowRecipe(false)
+      if (deleted !== false) {
+        setShowDeleteConfirm(false)
+        setShowRecipe(false)
+      }
+    } finally {
+      setDeleting(false)
     }
-
-    setDeleting(false)
   }
 
   return (

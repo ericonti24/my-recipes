@@ -20,8 +20,11 @@ import {
 export default function RecipeDashboard({ session, onSignOut }) {
   const [showRecipeForm, setShowRecipeForm] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [loadingAction, setLoadingAction] = useState('')
   const [refreshRecipes, setRefreshRecipes] = useState(0)
   const [editingRecipe, setEditingRecipe] = useState(null)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const displayName =
     session.user.user_metadata?.username ||
@@ -29,9 +32,27 @@ export default function RecipeDashboard({ session, onSignOut }) {
     session.user.user_metadata?.name ||
     session.user.email
 
+  function showSuccessMessage(message) {
+    setSuccess(message)
+    setTimeout(() => {
+      setSuccess('')
+    }, 5000) // Clear the success message after 5 seconds
+  }
+
+  function showErrorMessage(message) {
+    setError(message)
+
+    setTimeout(() => {
+      setError('')
+    }, 5000) // Clear the error message after 5 seconds
+  }
+
   // Function to handle creating a new recipe
   async function handleCreateRecipe(recipeData) {
     setLoading(true)
+    setLoadingAction('create')
+    setError('')
+    setSuccess('')
 
     try {
       await createRecipe({
@@ -48,27 +69,30 @@ export default function RecipeDashboard({ session, onSignOut }) {
       setShowRecipeForm(false)
       setEditingRecipe(null)
 
+      showSuccessMessage('Recipe created successfully.')
+
       return true
     } catch (error) {
       console.error('Error creating recipe:', error)
+      showErrorMessage(error.message || 'Failed to create recipe.')
       return false
     } finally {
       setLoading(false)
+      setLoadingAction('')
     }
   }
 
   // Function to handle updating an existing recipe
   async function handleUpdateRecipe(id, recipeData) {
     setLoading(true)
+    setLoadingAction('update')
+    setError('')
+    setSuccess('')
 
     try {
-      // Find the currently displayed recipe
       const currentRecipe = editingRecipe
-
-      // Keep track of the existing image
       const oldImageUrl = currentRecipe?.image_url || null
 
-      // Update the recipe first
       await updateRecipe(id, {
         title: recipeData.title,
         description: recipeData.description,
@@ -78,7 +102,6 @@ export default function RecipeDashboard({ session, onSignOut }) {
         steps: recipeData.steps,
       })
 
-      // If the image was replaced, delete the old image
       if (
         oldImageUrl &&
         recipeData.imageUrl &&
@@ -98,18 +121,25 @@ export default function RecipeDashboard({ session, onSignOut }) {
       setShowRecipeForm(false)
       setEditingRecipe(null)
 
+      showSuccessMessage('Recipe updated successfully.')
+
       return true
     } catch (error) {
       console.error('Error updating recipe:', error)
+      showErrorMessage(error.message || 'Failed to update recipe.')
       return false
     } finally {
       setLoading(false)
+      setLoadingAction('')
     }
   }
 
   // Function to handle deleting a recipe
   async function handleDeleteRecipe(id) {
     setLoading(true)
+    setLoadingAction('delete')
+    setError('')
+    setSuccess('')
 
     try {
       // Get the recipe before deleting it
@@ -136,12 +166,16 @@ export default function RecipeDashboard({ session, onSignOut }) {
       setShowRecipeForm(false)
       setEditingRecipe(null)
 
+      showSuccessMessage('Recipe deleted successfully.')
+
       return true
     } catch (error) {
       console.error('Error deleting recipe:', error)
+      showErrorMessage(error.message || 'Failed to delete recipe.')
       return false
     } finally {
       setLoading(false)
+      setLoadingAction('')
     }
   }
 
@@ -189,6 +223,32 @@ export default function RecipeDashboard({ session, onSignOut }) {
         </Flex>
       </Flex>
 
+      {error && (
+        <Box
+          mb={4}
+          p={3}
+          borderWidth="1px"
+          borderRadius="md"
+        >
+          <Text color="red.500">
+            {error}
+          </Text>
+        </Box>
+      )}
+
+      {success && (
+        <Box
+          mb={4}
+          p={3}
+          borderWidth="1px"
+          borderRadius="md"
+        >
+          <Text color="green.500">
+            {success}
+          </Text>
+        </Box>
+      )}
+
       <RecipeList
         refreshRecipes={refreshRecipes}
         onEdit={(recipe) => {
@@ -196,6 +256,8 @@ export default function RecipeDashboard({ session, onSignOut }) {
           setShowRecipeForm(true)
         }}
         onDelete={handleDeleteRecipe}
+        actionLoading={loading}
+        loadingAction={loadingAction}
       />
 
       {showRecipeForm && (
@@ -208,6 +270,7 @@ export default function RecipeDashboard({ session, onSignOut }) {
           onCreate={handleCreateRecipe}
           onUpdate={handleUpdateRecipe}
           loading={loading}
+          loadingAction={loadingAction}
         />
       )}
     </Box>
