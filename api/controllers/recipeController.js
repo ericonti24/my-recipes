@@ -14,11 +14,11 @@ const createRecipe = async (req, res) => {
 
     const userId = req.user.id
 
-    console.log('Create recipe request:', {
-      title,
-      ingredients,
-      steps,
-    })
+    // console.log('Create recipe request:', {
+    //   title,
+    //   ingredients,
+    //   steps,
+    // })
 
     // Create the recipe
     const { data: recipe, error: recipeError } = await supabase

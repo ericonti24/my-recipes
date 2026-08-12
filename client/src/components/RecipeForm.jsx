@@ -14,6 +14,8 @@ import {
   Textarea,
 } from '@chakra-ui/react'
 
+import { uploadRecipeImage } from '../lib/api'
+
 export default function RecipeForm({
   recipe,
   onCreate,
@@ -25,6 +27,8 @@ export default function RecipeForm({
   const [description, setDescription] = useState('')
   const [prepTime, setPrepTime] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
 
   const [ingredients, setIngredients] = useState([''])
   const [steps, setSteps] = useState([''])
@@ -48,6 +52,8 @@ export default function RecipeForm({
         : ''
     )
     setImageUrl(recipe.image_url || '')
+    setImageFile(null)
+    setImagePreview(recipe.image_url || '')
 
     setIngredients(
       recipe.ingredients?.length > 0
@@ -120,6 +126,49 @@ export default function RecipeForm({
     )
   }
 
+  // Handle image file selection and validation
+  function handleImageChange(event) {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      setImageFile(null)
+      return
+    }
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      setFormError(
+        'Please select a JPG, PNG, or WebP image.'
+      )
+
+      event.target.value = ''
+      return
+    }
+
+    const maxSize = 5 * 1024 * 1024
+
+    if (file.size > maxSize) {
+      setFormError(
+        'Image must be smaller than 5 MB.'
+      )
+
+      event.target.value = ''
+      return
+    }
+
+    setFormError('')
+    setImageFile(file)
+
+    const previewUrl = URL.createObjectURL(file)
+    setImagePreview(previewUrl)
+  }
+
+  // Handle form submission
   async function handleSubmit(event) {
     event.preventDefault()
 
@@ -152,13 +201,29 @@ export default function RecipeForm({
       return
     }
 
+    let finalImageUrl = cleanedImageUrl || null
+
+    if (imageFile) {
+      try {
+        finalImageUrl = await uploadRecipeImage(imageFile)
+      } catch (error) {
+        console.error('Image upload error:', error)
+
+        setFormError(
+          error.message || 'Failed to upload image.'
+        )
+
+        return
+      }
+    }
+
     const recipeData = {
       title: cleanedTitle,
       description: cleanedDescription || null,
       prepTime: prepTime
         ? Number(prepTime)
         : null,
-      imageUrl: cleanedImageUrl || null,
+      imageUrl: finalImageUrl || null,
       ingredients: cleanedIngredients,
       steps: cleanedSteps,
     }
@@ -184,6 +249,8 @@ export default function RecipeForm({
     setDescription('')
     setPrepTime('')
     setImageUrl('')
+    setImageFile(null)
+    setImagePreview('')
     setIngredients([''])
     setSteps([''])
     setFormError('')
@@ -301,19 +368,44 @@ export default function RecipeForm({
 
                     <Field.Root>
                       <Field.Label>
-                        Image URL
+                        Recipe Image
                       </Field.Label>
 
                       <Input
-                        type="url"
-                        value={imageUrl}
-                        onChange={(event) =>
-                          setImageUrl(
-                            event.target.value
-                          )
-                        }
-                        placeholder="https://example.com/recipe.jpg"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImageChange}
                       />
+
+                      <Text
+                        fontSize="sm"
+                        color="gray.500"
+                      >
+                        JPG, PNG, or WebP. Maximum size: 5 MB.
+                      </Text>
+
+                      {imagePreview && (
+                        <Box mt={3}>
+                          <Text
+                            fontSize="sm"
+                            mb={2}
+                            fontWeight="medium"
+                          >
+                            Image Preview
+                          </Text>
+
+                          <img
+                            src={imagePreview}
+                            alt="Recipe preview"
+                            style={{
+                              width: '100%',
+                              maxHeight: '300px',
+                              objectFit: 'cover',
+                              borderRadius: '8px',
+                            }}
+                          />
+                        </Box>
+                      )}
                     </Field.Root>
 
                   </Stack>

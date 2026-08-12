@@ -62,3 +62,42 @@ export async function deleteRecipe(id) {
     method: 'DELETE',
   })
 }
+
+export async function uploadRecipeImage(file) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    throw new Error('User is not authenticated')
+  }
+
+  const userId = session.user.id
+
+  const fileExtension = file.name.split('.').pop()
+
+  const fileName = `${crypto.randomUUID()}.${fileExtension}`
+
+  const filePath = `${userId}/${fileName}`
+
+  const { error } = await supabase.storage
+    .from('recipe-images')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+    })
+
+  if (error) {
+    throw new Error(
+      `Failed to upload image: ${error.message}`
+    )
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage
+    .from('recipe-images')
+    .getPublicUrl(filePath)
+
+  return publicUrl
+}
