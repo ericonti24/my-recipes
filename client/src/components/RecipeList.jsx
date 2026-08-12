@@ -7,8 +7,6 @@ export default function RecipeList({
     refreshRecipes, 
     onEdit,
     onDelete, 
-    actionLoading,
-    loadingAction
   }) {
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -69,8 +67,6 @@ export default function RecipeList({
             recipe={recipe}
             onEdit={onEdit}
             onDelete={onDelete}
-            actionLoading={actionLoading}
-            loadingAction={loadingAction}
           />
         ))
       )}

@@ -192,13 +192,63 @@ export default function RecipeForm({
       return
     }
 
+    if (cleanedTitle.length > 120) {
+      setFormError(
+        'Recipe name must be 120 characters or less.'
+      )
+      return
+    }
+
+    if (cleanedDescription.length > 1000) {
+      setFormError(
+        'Description must be 1000 characters or less.'
+      )
+      return
+    }
+
+    if (prepTime) {
+      const numericPrepTime = Number(prepTime)
+
+      if (
+        !Number.isInteger(numericPrepTime) ||
+        numericPrepTime < 1
+      ) {
+        setFormError(
+          'Prep time must be a whole number greater than 0.'
+        )
+        return
+      }
+    }
+
     if (cleanedIngredients.length === 0) {
       setFormError('Add at least one ingredient.')
       return
     }
 
+    if (
+      cleanedIngredients.some(
+        (ingredient) => ingredient.length > 300
+      )
+    ) {
+      setFormError(
+        'Each ingredient must be 300 characters or less.'
+      )
+      return
+    }
+
     if (cleanedSteps.length === 0) {
       setFormError('Add at least one instruction step.')
+      return
+    }
+
+    if (
+      cleanedSteps.some(
+        (step) => step.length > 2000
+      )
+    ) {
+      setFormError(
+        'Each instruction step must be 2000 characters or less.'
+      )
       return
     }
 
@@ -326,7 +376,7 @@ export default function RecipeForm({
                     <Field.Root required>
                       <Field.Label>
                         Recipe name
-                        <Field.RequiredIndicator />
+                        {/* <Field.RequiredIndicator /> */}
                       </Field.Label>
 
                       <Input

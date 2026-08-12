@@ -36,7 +36,7 @@ export default function RecipeDashboard({ session, onSignOut }) {
     setSuccess(message)
     setTimeout(() => {
       setSuccess('')
-    }, 5000) // Clear the success message after 5 seconds
+    }, 3000) // Clear the success message after 3 seconds
   }
 
   function showErrorMessage(message) {
@@ -44,7 +44,7 @@ export default function RecipeDashboard({ session, onSignOut }) {
 
     setTimeout(() => {
       setError('')
-    }, 5000) // Clear the error message after 5 seconds
+    }, 3000) // Clear the error message after 3 seconds
   }
 
   // Function to handle creating a new recipe
@@ -204,7 +204,7 @@ export default function RecipeDashboard({ session, onSignOut }) {
           </Text>
         </Box>
 
-        <Flex gap={3}>
+        <Flex gap={4}>
           <Button
             onClick={() => {
               setEditingRecipe(null)
@@ -227,8 +227,8 @@ export default function RecipeDashboard({ session, onSignOut }) {
         <Box
           mb={4}
           p={3}
-          borderWidth="1px"
-          borderRadius="md"
+          // borderWidth="1px"
+          // borderRadius="md"
         >
           <Text color="red.500">
             {error}
@@ -240,8 +240,8 @@ export default function RecipeDashboard({ session, onSignOut }) {
         <Box
           mb={4}
           p={3}
-          borderWidth="1px"
-          borderRadius="md"
+          // borderWidth="1px"
+          // borderRadius="md"
         >
           <Text color="green.500">
             {success}
@@ -256,8 +256,6 @@ export default function RecipeDashboard({ session, onSignOut }) {
           setShowRecipeForm(true)
         }}
         onDelete={handleDeleteRecipe}
-        actionLoading={loading}
-        loadingAction={loadingAction}
       />
 
       {showRecipeForm && (
