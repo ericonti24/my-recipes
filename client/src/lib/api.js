@@ -101,3 +101,33 @@ export async function uploadRecipeImage(file) {
 
   return publicUrl
 }
+
+export async function deleteRecipeImage(imageUrl) {
+  if (!imageUrl) {
+    return
+  }
+
+  const marker = '/recipe-images/'
+
+  if (!imageUrl.includes(marker)) {
+    return
+  }
+
+  const filePath = imageUrl
+    .split(marker)[1]
+    .split('?')[0]
+
+  if (!filePath) {
+    return
+  }
+
+  const { error } = await supabase.storage
+    .from('recipe-images')
+    .remove([filePath])
+
+  if (error) {
+    throw new Error(
+      `Failed to delete image: ${error.message}`
+    )
+  }
+}

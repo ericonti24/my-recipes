@@ -13,6 +13,8 @@ import {
   createRecipe, 
   updateRecipe, 
   deleteRecipe, 
+  deleteRecipeImage,
+  getRecipeById,
 } from '../lib/api'
 
 export default function RecipeDashboard({ session, onSignOut }) {
@@ -27,36 +29,46 @@ export default function RecipeDashboard({ session, onSignOut }) {
     session.user.user_metadata?.name ||
     session.user.email
 
+  // Function to handle creating a new recipe
   async function handleCreateRecipe(recipeData) {
-  setLoading(true)
+    setLoading(true)
 
-  try {
-    await createRecipe({
-      title: recipeData.title,
-      description: recipeData.description,
-      prepTime: recipeData.prepTime,
-      imageUrl: recipeData.imageUrl,
-      ingredients: recipeData.ingredients,
-      steps: recipeData.steps,
-    })
+    try {
+      await createRecipe({
+        title: recipeData.title,
+        description: recipeData.description,
+        prepTime: recipeData.prepTime,
+        imageUrl: recipeData.imageUrl,
+        ingredients: recipeData.ingredients,
+        steps: recipeData.steps,
+      })
 
-    setRefreshRecipes((current) => current + 1)
-    setShowRecipeForm(false)
-    setEditingRecipe(null)
+      // Refresh the recipe list after creation.
+      setRefreshRecipes((current) => current + 1)
+      setShowRecipeForm(false)
+      setEditingRecipe(null)
 
-    return true
-  } catch (error) {
-    console.error('Error creating recipe:', error)
-    return false
-  } finally {
-    setLoading(false)
+      return true
+    } catch (error) {
+      console.error('Error creating recipe:', error)
+      return false
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
+  // Function to handle updating an existing recipe
   async function handleUpdateRecipe(id, recipeData) {
     setLoading(true)
 
     try {
+      // Find the currently displayed recipe
+      const currentRecipe = editingRecipe
+
+      // Keep track of the existing image
+      const oldImageUrl = currentRecipe?.image_url || null
+
+      // Update the recipe first
       await updateRecipe(id, {
         title: recipeData.title,
         description: recipeData.description,
@@ -65,6 +77,22 @@ export default function RecipeDashboard({ session, onSignOut }) {
         ingredients: recipeData.ingredients,
         steps: recipeData.steps,
       })
+
+      // If the image was replaced, delete the old image
+      if (
+        oldImageUrl &&
+        recipeData.imageUrl &&
+        oldImageUrl !== recipeData.imageUrl
+      ) {
+        try {
+          await deleteRecipeImage(oldImageUrl)
+        } catch (imageError) {
+          console.error(
+            'Recipe updated, but old image could not be deleted:',
+            imageError
+          )
+        }
+      }
 
       setRefreshRecipes((current) => current + 1)
       setShowRecipeForm(false)
@@ -79,11 +107,30 @@ export default function RecipeDashboard({ session, onSignOut }) {
     }
   }
 
+  // Function to handle deleting a recipe
   async function handleDeleteRecipe(id) {
     setLoading(true)
 
     try {
+      // Get the recipe before deleting it
+      const result = await getRecipeById(id)
+
+      const imageUrl = result.recipe?.image_url || null
+
+      // Delete the recipe from the database
       await deleteRecipe(id)
+
+      // Delete the associated image from Storage
+      if (imageUrl) {
+        try {
+          await deleteRecipeImage(imageUrl)
+        } catch (imageError) {
+          console.error(
+            'Recipe deleted, but image could not be deleted:',
+            imageError
+          )
+        }
+      }
 
       setRefreshRecipes((current) => current + 1)
       setShowRecipeForm(false)
