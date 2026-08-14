@@ -157,7 +157,7 @@ export default function App() {
               size="xl"
               mb={2}
             >
-              My Recipes
+              TASTE OF MIND
             </Heading>
 
             <Text color="gray.600">
