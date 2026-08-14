@@ -135,17 +135,17 @@ export default function App() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      px={{ base: 4, md: 6 }}
+      px={{ base: 3, sm: 4, md: 6 }}
       py={8}
       bg="gray.50"
     >
       <Box
         width="100%"
-        maxW="420px"
+        maxW={{ base: "100%", sm: "420px" }}
         bg="white"
         borderWidth="1px"
         borderRadius="xl"
-        p={{ base: 6, md: 8 }}
+        p={{ base: 5, md: 8 }}
         boxShadow="sm"
       >
         <Stack gap={6}>
