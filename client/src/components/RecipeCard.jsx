@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Button,
@@ -17,10 +17,7 @@ export default function RecipeCard({
     onDelete
   }) {
   const [showRecipe, setShowRecipe] = useState(false)
-  const [checkedIngredients, setCheckedIngredients] = useState(() => {
-    const saved = localStorage.getItem(`${recipe.id}`)
-    return saved ? JSON.parse(saved) : []
-  })
+  const [checkedIngredients, setCheckedIngredients] = useState([])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -28,14 +25,41 @@ export default function RecipeCard({
     setShowRecipe(false)
   }
 
+  // Load checked ingredients from localStorage when the component mounts or recipe changes
+  useEffect(() => {
+    const saved = localStorage.getItem(`${recipe.id}`)
+
+    if (!saved) {
+      setCheckedIngredients([])
+      return
+    }
+
+    const savedIds = JSON.parse(saved)
+
+    const validIngredientIds = recipe.ingredients
+      ?.map((ingredient) => ingredient.id)
+      .filter(Boolean) || []
+
+    const validCheckedIds = savedIds.filter((id) =>
+      validIngredientIds.includes(id)
+    )
+
+    setCheckedIngredients(validCheckedIds)
+
+    localStorage.setItem(
+      `${recipe.id}`,
+      JSON.stringify(validCheckedIds)
+    )
+  }, [recipe.id, recipe.ingredients])
+
   // Toggle ingredient checked state and save to localStorage
-  function toggleIngredient(index) {
+  function toggleIngredient(ingredientId) {
     setCheckedIngredients((current) => {
-      const updated = current.includes(index)
+      const updated = current.includes(ingredientId)
         ? current.filter(
-            (ingredientIndex) => ingredientIndex !== index
+            (id) => id !== ingredientId
           )
-        : [...current, index]
+        : [...current, ingredientId]
 
       localStorage.setItem(
         `${recipe.id}`,
@@ -46,6 +70,7 @@ export default function RecipeCard({
     })
   }
 
+  // Handle recipe deletion
   async function handleDelete() {
     setDeleting(true)
 
@@ -205,10 +230,10 @@ export default function RecipeCard({
                       {recipe.ingredients.map(
                         (ingredient, index) => (
                           <Checkbox.Root
-                            key={index}
+                            key={ingredient.id}
                             size="lg"
-                            checked={checkedIngredients.includes(index)}
-                            onCheckedChange={() => toggleIngredient(index)}
+                            checked={checkedIngredients.includes(ingredient.id)}
+                            onCheckedChange={() => toggleIngredient(ingredient.id)}
                           >
                             <Checkbox.HiddenInput />
                             <Checkbox.Control />

@@ -14,12 +14,6 @@ const createRecipe = async (req, res) => {
 
     const userId = req.user.id
 
-    // console.log('Create recipe request:', {
-    //   title,
-    //   ingredients,
-    //   steps,
-    // })
-
     // Create the recipe
     const { data: recipe, error: recipeError } = await supabase
       .from('recipes')
@@ -47,7 +41,7 @@ const createRecipe = async (req, res) => {
       const ingredientRows = ingredients.map((ingredient, index) => ({
         recipe_id: recipe.id,
         display_order: index + 1,
-        ingredient,
+        ingredient: ingredient.ingredient,
       }))
 
       const { error: ingredientsError } = await supabase
@@ -244,8 +238,8 @@ const updateRecipe = async (req, res) => {
       description,
       prepTime,
       imageUrl,
-      ingredients,
-      steps,
+      ingredients = [],
+      steps = [],
     } = req.body
 
     // Update the main recipe
@@ -278,43 +272,111 @@ const updateRecipe = async (req, res) => {
       })
     }
 
-    // Delete existing ingredients
-    const { error: deleteIngredientsError } = await supabase
+    // Get existing ingredients
+    const {
+      data: existingIngredients,
+      error: existingIngredientsError,
+    } = await supabase
       .from("ingredients")
-      .delete()
+      .select("id")
       .eq("recipe_id", id)
 
-    if (deleteIngredientsError) {
+    if (existingIngredientsError) {
       console.error(
-        "Delete existing ingredients error:",
-        deleteIngredientsError
+        "Get existing ingredients error:",
+        existingIngredientsError
       )
 
       return res.status(500).json({
-        message: "Failed to update ingredients",
-        error: deleteIngredientsError.message,
+        message: "Failed to retrieve existing ingredients",
+        error: existingIngredientsError.message,
       })
     }
 
-    // Insert updated ingredients
-    if (ingredients && ingredients.length > 0) {
-      const ingredientRows = ingredients.map((ingredient, index) => ({
-        recipe_id: id,
-        display_order: index + 1,
-        ingredient,
-      }))
+    // Get submitted ingredient IDs
+    const submittedIngredientIds = ingredients
+      .filter((ingredient) => ingredient.id != null)
+      .map((ingredient) => ingredient.id)
 
-      const { error: ingredientsError } = await supabase
+    // Delete ingredients removed from the submitted data
+    const ingredientIdsToDelete = existingIngredients
+      .map((ingredient) => ingredient.id)
+      .filter(
+        (existingId) =>
+          !submittedIngredientIds.includes(existingId)
+      )
+
+    if (ingredientIdsToDelete.length > 0) {
+      const { error: deleteIngredientsError } = await supabase
         .from("ingredients")
-        .insert(ingredientRows)
+        .delete()
+        .in("id", ingredientIdsToDelete)
+        .eq("recipe_id", id)
 
-      if (ingredientsError) {
-        console.error("Update ingredients error:", ingredientsError)
+      if (deleteIngredientsError) {
+        console.error(
+          "Delete removed ingredients error:",
+          deleteIngredientsError
+        )
 
         return res.status(500).json({
-          message: "Failed to update ingredients",
-          error: ingredientsError.message,
+          message: "Failed to remove ingredients",
+          error: deleteIngredientsError.message,
         })
+      }
+    }
+
+    // Update existing ingredients
+    // Insert new ingredients
+    for (let index = 0; index < ingredients.length; index++) {
+      const ingredient = ingredients[index]
+
+      // Existing ingredient
+      if (ingredient.id != null) {
+        const { error: updateIngredientError } = await supabase
+          .from("ingredients")
+          .update({
+            ingredient: ingredient.ingredient,
+            display_order: index + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", ingredient.id)
+          .eq("recipe_id", id)
+
+        if (updateIngredientError) {
+          console.error(
+            "Update ingredient error:",
+            updateIngredientError
+          )
+
+          return res.status(500).json({
+            message: "Failed to update ingredient",
+            error: updateIngredientError.message,
+          })
+        }
+      }
+
+      // New ingredient
+      else {
+        const { error: insertIngredientError } = await supabase
+          .from("ingredients")
+          .insert({
+            recipe_id: id,
+            display_order: index + 1,
+            ingredient: ingredient.ingredient,
+          })
+
+        if (insertIngredientError) {
+          console.error(
+            "Insert new ingredient error:",
+            insertIngredientError
+          )
+
+          return res.status(500).json({
+            message: "Failed to add ingredient",
+            error: insertIngredientError.message,
+          })
+        }
       }
     }
 
@@ -337,7 +399,7 @@ const updateRecipe = async (req, res) => {
     }
 
     // Insert updated recipe steps
-    if (steps && steps.length > 0) {
+    if (steps.length > 0) {
       const stepRows = steps.map((instruction, index) => ({
         recipe_id: id,
         display_order: index + 1,
@@ -349,7 +411,10 @@ const updateRecipe = async (req, res) => {
         .insert(stepRows)
 
       if (stepsError) {
-        console.error("Update recipe steps error:", stepsError)
+        console.error(
+          "Update recipe steps error:",
+          stepsError
+        )
 
         return res.status(500).json({
           message: "Failed to update recipe steps",
@@ -358,7 +423,7 @@ const updateRecipe = async (req, res) => {
       }
     }
 
-    // Retrieve the complete updated recipe
+    // Retrieve complete updated recipe
     const { data: updatedRecipe, error: fetchError } = await supabase
       .from("recipes")
       .select(`
@@ -386,23 +451,32 @@ const updateRecipe = async (req, res) => {
         )
       `)
       .eq("id", id)
+      .eq("user_id", req.user.id)
       .single()
 
     if (fetchError) {
-      console.error("Fetch updated recipe error:", fetchError)
+      console.error(
+        "Fetch updated recipe error:",
+        fetchError
+      )
 
       return res.status(500).json({
-        message: "Recipe updated but failed to retrieve updated data",
+        message:
+          "Recipe updated but failed to retrieve updated data",
         error: fetchError.message,
       })
     }
 
+    // Return updated recipe
     res.status(200).json({
       message: "Recipe updated successfully",
       recipe: updatedRecipe,
     })
   } catch (error) {
-    console.error("Unexpected update recipe error:", error)
+    console.error(
+      "Unexpected update recipe error:",
+      error
+    )
 
     res.status(500).json({
       message: "Server error",

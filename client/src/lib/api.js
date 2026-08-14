@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// Helper function to get the access token from Supabase session
 async function getAccessToken() {
   const {
     data: { session },
@@ -14,6 +15,7 @@ async function getAccessToken() {
   return session.access_token
 }
 
+// Generic function to make API requests with authentication
 async function apiRequest(endpoint, options = {}) {
   const token = await getAccessToken()
 
@@ -35,14 +37,17 @@ async function apiRequest(endpoint, options = {}) {
   return data
 }
 
+// API functions for recipes
 export async function getRecipes() {
   return apiRequest('/recipes')
 }
 
+// Get a single recipe by ID
 export async function getRecipeById(id) {
   return apiRequest(`/recipes/${id}`)
 }
 
+// API functions for creating, updating, and deleting recipes
 export async function createRecipe(recipe) {
   return apiRequest('/recipes', {
     method: 'POST',
@@ -50,6 +55,7 @@ export async function createRecipe(recipe) {
   })
 }
 
+// Update a recipe by ID
 export async function updateRecipe(id, recipe) {
   return apiRequest(`/recipes/${id}`, {
     method: 'PATCH',
@@ -57,12 +63,14 @@ export async function updateRecipe(id, recipe) {
   })
 }
 
+// Delete a recipe by ID
 export async function deleteRecipe(id) {
   return apiRequest(`/recipes/${id}`, {
     method: 'DELETE',
   })
 }
 
+// API functions for uploading and deleting recipe images
 export async function uploadRecipeImage(file) {
   const {
     data: { session },
@@ -102,6 +110,7 @@ export async function uploadRecipeImage(file) {
   return publicUrl
 }
 
+// Delete a recipe image from Supabase Storage
 export async function deleteRecipeImage(imageUrl) {
   if (!imageUrl) {
     return

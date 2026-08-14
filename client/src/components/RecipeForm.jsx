@@ -31,7 +31,7 @@ export default function RecipeForm({
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState('')
 
-  const [ingredients, setIngredients] = useState([''])
+  const [ingredients, setIngredients] = useState([{id: null, ingredient: ''}])
   const [steps, setSteps] = useState([''])
 
   const [formError, setFormError] = useState('')
@@ -58,10 +58,11 @@ export default function RecipeForm({
 
     setIngredients(
       recipe.ingredients?.length > 0
-        ? recipe.ingredients.map(
-            (ingredient) => ingredient.ingredient
-          )
-        : ['']
+        ? recipe.ingredients.map((ingredient) => ({
+            id: ingredient.id,
+            ingredient: ingredient.ingredient,
+          }))
+        : [{ id: null, ingredient: '' }]
     )
 
     setSteps(
@@ -75,23 +76,29 @@ export default function RecipeForm({
     setFormError('')
   }, [recipe])
 
+  // Update an ingredient at a specific index
   function updateIngredient(index, value) {
     setIngredients((current) =>
       current.map((ingredient, currentIndex) =>
         currentIndex === index
-          ? value
+          ? {
+              ...ingredient,
+              ingredient: value,
+            }
           : ingredient
       )
     )
   }
 
+  // Add a new ingredient
   function addIngredient() {
     setIngredients((current) => [
       ...current,
-      '',
+      { id: null, ingredient: '' },
     ])
   }
 
+  // Remove an ingredient at a specific index
   function removeIngredient(index) {
     setIngredients((current) =>
       current.filter(
@@ -101,6 +108,7 @@ export default function RecipeForm({
     )
   }
 
+  // Update a step at a specific index
   function updateStep(index, value) {
     setSteps((current) =>
       current.map((step, currentIndex) =>
@@ -111,6 +119,7 @@ export default function RecipeForm({
     )
   }
 
+  // Add a new step
   function addStep() {
     setSteps((current) => [
       ...current,
@@ -118,6 +127,7 @@ export default function RecipeForm({
     ])
   }
 
+  // Remove a step at a specific index
   function removeStep(index) {
     setSteps((current) =>
       current.filter(
@@ -180,8 +190,11 @@ export default function RecipeForm({
     const cleanedImageUrl = imageUrl.trim()
 
     const cleanedIngredients = ingredients
-      .map((item) => item.trim())
-      .filter(Boolean)
+      .map((item) => ({
+        id: item.id,
+        ingredient: item.ingredient.trim(),
+      }))
+      .filter((item) => item.ingredient)
 
     const cleanedSteps = steps
       .map((step) => step.trim())
@@ -227,7 +240,7 @@ export default function RecipeForm({
 
     if (
       cleanedIngredients.some(
-        (ingredient) => ingredient.length > 300
+        (ingredient) => ingredient.ingredient.length > 300
       )
     ) {
       setFormError(
@@ -310,7 +323,7 @@ export default function RecipeForm({
     setImageUrl('')
     setImageFile(null)
     setImagePreview('')
-    setIngredients([''])
+    setIngredients([{ id: null, ingredient: '' },])
     setSteps([''])
     setFormError('')
   }
@@ -492,7 +505,7 @@ export default function RecipeForm({
                             </Field.Label>
 
                             <Input
-                              value={ingredient}
+                              value={ingredient.ingredient}
                               onChange={(event) =>
                                 updateIngredient(
                                   index,
