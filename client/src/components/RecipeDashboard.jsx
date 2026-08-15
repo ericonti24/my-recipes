@@ -196,7 +196,7 @@ export default function RecipeDashboard({ session, onSignOut }) {
       >
         <Box>
           <Heading size="xl">
-            My Recipes
+            TASTE OF MIND
           </Heading>
 
           <Text mt={1}>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Box, Heading, Spinner, Text } from '@chakra-ui/react'
+import { Box, Heading, Spinner, Text, Stack} from '@chakra-ui/react'
 import { getRecipes } from '../lib/api'
 import RecipeCard from './RecipeCard'
 
@@ -61,14 +61,16 @@ export default function RecipeList({
           You don't have any recipes yet.
         </Text>
       ) : (
-        recipes.map((recipe) => (
-          <RecipeCard
-            key={recipe.id}
-            recipe={recipe}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))
+        <Stack gap={6}>
+          {recipes.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
+        </Stack>
       )}
     </Box>
   )
