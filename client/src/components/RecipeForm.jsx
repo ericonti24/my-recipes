@@ -526,6 +526,7 @@ export default function RecipeForm({
                               onClick={() =>
                                 removeIngredient(index)
                               }
+                              colorPalette="red"
                             >
                               Remove
                             </Button>
@@ -588,6 +589,7 @@ export default function RecipeForm({
                               onClick={() =>
                                 removeStep(index)
                               }
+                              colorPalette="red"
                             >
                               Remove
                             </Button>

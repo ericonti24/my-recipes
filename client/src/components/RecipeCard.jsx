@@ -93,7 +93,7 @@ export default function RecipeCard({
         width="100%"
         maxW="400px"
         mx="auto"
-        borderWidth="1px"
+        borderWidth="2px"
         borderRadius="lg"
         overflow="hidden"
         cursor="pointer"
