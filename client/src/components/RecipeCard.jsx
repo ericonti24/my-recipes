@@ -27,25 +27,35 @@ export default function RecipeCard({
 
   // Load checked ingredients from localStorage when the component mounts or recipe changes
   useEffect(() => {
+    //saves recipe id in local storage. 
     const saved = localStorage.getItem(`${recipe.id}`)
 
+    //check if anything was saved. 
+    // if no, there are no checked recipes, return emapty array and stop process.
     if (!saved) {
       setCheckedIngredients([])
       return
     }
 
+    //turn localStorate string into an array.
     const savedIds = JSON.parse(saved)
 
+    //grabs only the recipe ids using optional chaining 
+    // (?. - if recipe.ingredients exists, do the .map(). if it doesn't exist, don't crash.)
+    // and removes values that aren't valid, such as null, undefined. 
     const validIngredientIds = recipe.ingredients
       ?.map((ingredient) => ingredient.id)
       .filter(Boolean) || []
 
+    //take every saved checkbox id and keep it only if that id still exists in the current recipe.
     const validCheckedIds = savedIds.filter((id) =>
       validIngredientIds.includes(id)
     )
 
+    //updated state
     setCheckedIngredients(validCheckedIds)
 
+    //turn array back to string for localStorage to use. 
     localStorage.setItem(
       `${recipe.id}`,
       JSON.stringify(validCheckedIds)
@@ -278,7 +288,7 @@ export default function RecipeCard({
                       No instructions listed.
                     </Text>
                   )}
-                </Box>
+                </Box> 
               </Stack>
             </Dialog.Body>
 

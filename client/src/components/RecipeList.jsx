@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Box, Heading, Spinner, Text, Stack} from '@chakra-ui/react'
+import { Box, Heading, Spinner, Text, Stack, Input} from '@chakra-ui/react'
 import { getRecipes } from '../lib/api'
 import RecipeCard from './RecipeCard'
 
@@ -11,6 +11,7 @@ export default function RecipeList({
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const loadRecipes = async () => {
     try {
@@ -50,19 +51,40 @@ export default function RecipeList({
     )
   }
 
+  const filteredRecipes = recipes.filter((recipe) =>
+    recipe.title.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const recipeCount = filteredRecipes.length
+
   return (
     <Box>
       <Heading size="lg" mb={4}>
         My Recipes
       </Heading>
 
+      <Input
+        mb={4}
+        placeholder="Search recipes..."
+        value={searchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
+      />
+
+      <Text mb={4}>
+        {recipeCount} {recipeCount === 1 ? 'recipe' : 'recipes'}
+      </Text>
+
       {recipes.length === 0 ? (
         <Text>
           You don't have any recipes yet.
         </Text>
+      ) : filteredRecipes.length === 0 ? (
+        <Text>
+          No recipes found.
+        </Text>
       ) : (
         <Stack gap={6}>
-          {recipes.map((recipe) => (
+          {filteredRecipes.map((recipe) => (
             <RecipeCard
               key={recipe.id}
               recipe={recipe}
