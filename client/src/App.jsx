@@ -154,6 +154,11 @@ export default function App() {
       return
     }
 
+    if (!isSigningUp) {
+      setIsPasswordRecovery(false)
+      localStorage.removeItem('passwordRecovery')
+    }
+
     setMessage(isSigningUp ? 'Account created.' : 'Signed in successfully.')
   }
 
