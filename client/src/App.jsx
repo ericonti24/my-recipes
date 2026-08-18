@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import RecipeDashboard from './components/RecipeDashboard'
+import ResetPassword from './components/ResetPassword'
 import {
   Box,
   Button,
@@ -24,6 +25,7 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
   useEffect(() => {
     //keeps user login state on page refresh
@@ -42,6 +44,7 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Sign in with Google
   async function signInWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -53,9 +56,53 @@ export default function App() {
     if (error) alert(error.message)
   }
 
+  // Handle password reset
+  async function handleForgotPassword() {
+    const cleanedEmail = email.trim()
+
+    if (!cleanedEmail) {
+      setMessage('Enter your email address first.')
+      return
+    }
+
+    setLoading(true)
+    setMessage('')
+
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      cleanedEmail,
+      {
+        redirectTo: `${window.location.origin}/reset-password`,
+      }
+    )
+
+    setLoading(false)
+
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+
+    setMessage(
+      'Password reset email sent. Check your email for instructions.'
+    )
+  }
+
+  // Return to sign-in page from reset password page
+  function returnToSignIn() {
+    setIsResettingPassword(false)
+    setMessage('')
+    setPassword('')
+  }
+
   //handles both sign up and sign in with email and password
   async function handleEmailAuth(event) {
     event.preventDefault()
+
+    //
+    if (isResettingPassword) {
+      await handleForgotPassword()
+      return
+    }
 
     //trim whitespace from username and email
     const cleanedUsername = username.trim()
@@ -118,6 +165,11 @@ export default function App() {
     setMessage('')
   }
 
+  // Render the ResetPassword component if the user is on the reset password page
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />
+  }
+
   // Render the RecipeDashboard if the user is signed in, otherwise render the sign-in/sign-up form
   if (session) {
     return (
@@ -174,9 +226,14 @@ export default function App() {
             <Stack gap={4}>
 
               <Heading size="md">
-                {isSigningUp
+                {/* {isSigningUp
                   ? 'Create an account'
-                  : 'Sign in'}
+                  : 'Sign in'} */}
+                  {isResettingPassword
+                    ? 'Send password reset email link'
+                    : isSigningUp
+                      ? 'Create Account'
+                      : 'Sign In'}
               </Heading>
 
               {/* Username */}
@@ -225,27 +282,51 @@ export default function App() {
 
               {/* Password */}
 
-              <Field.Root required>
-                <Field.Label>
-                  Password
-                  <Field.RequiredIndicator />
-                </Field.Label>
+              {!isResettingPassword && (
+                <Field.Root required>
+                  <Field.Label>
+                    Password
+                    <Field.RequiredIndicator />
+                  </Field.Label>
 
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(event) =>
-                    setPassword(event.target.value)
-                  }
-                  autoComplete={
-                    isSigningUp
-                      ? 'new-password'
-                      : 'current-password'
-                  }
-                  minLength={6}
-                  placeholder="Enter your password"
-                />
-              </Field.Root>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(event) =>
+                      setPassword(event.target.value)
+                    }
+                    autoComplete={
+                      isSigningUp
+                        ? 'new-password'
+                        : 'current-password'
+                    }
+                    minLength={6}
+                    placeholder="Enter your password"
+                  />
+                </Field.Root>
+              )}
+
+              {!isSigningUp && (
+                <Button
+                  type="button"
+                  variant="plain"
+                  size="sm"
+                  alignSelf="flex-end"
+                  onClick={() => {
+                    if (isResettingPassword) {
+                      returnToSignIn()
+                    } else {
+                      setIsResettingPassword(true)
+                      setMessage('')
+                      setPassword('')
+                    }
+                  }}
+                >
+                  {isResettingPassword
+                    ? 'Return to sign in'
+                    : 'Forgot password?'}
+                </Button>
+              )}
 
               {/* Error / Status Message */}
 
@@ -269,9 +350,11 @@ export default function App() {
                 width="100%"
                 loading={loading}
               >
-                {isSigningUp
-                  ? 'Create Account'
-                  : 'Sign In'}
+                {isResettingPassword
+                  ? 'Send'
+                  : isSigningUp
+                    ? 'Create Account'
+                    : 'Sign In'}
               </Button>
 
             </Stack>
