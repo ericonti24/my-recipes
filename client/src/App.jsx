@@ -20,14 +20,19 @@ const USERNAME_PATTERN = /^[A-Za-z0-9_-]{2,30}$/
 export default function App() {
   const [session, setSession] = useState(null)
   const [isSigningUp, setIsSigningUp] = useState(false)
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isResettingPassword, setIsResettingPassword] = useState(false)
 
   useEffect(() => {
+    //
+    const recoveryPending = localStorage.getItem('passwordRecovery') === 'true'
+    setIsPasswordRecovery(recoveryPending)
+
     //keeps user login state on page refresh
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
@@ -81,6 +86,9 @@ export default function App() {
       setMessage(error.message)
       return
     }
+
+    setIsPasswordRecovery(true)
+    localStorage.setItem('passwordRecovery', 'true')
 
     setMessage(
       'Password reset email sent. Check your email for instructions.'
@@ -171,7 +179,7 @@ export default function App() {
   }
 
   // Render the RecipeDashboard if the user is signed in, otherwise render the sign-in/sign-up form
-  if (session) {
+  if (session && !isPasswordRecovery) {
     return (
       <RecipeDashboard 
         session={session} 

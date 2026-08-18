@@ -39,8 +39,13 @@ export default function ResetPassword() {
 
     if (error) {
       setMessage(error.message)
+      setLoading(false)
       return
     }
+
+    await supabase.auth.signOut()
+    localStorage.removeItem('passwordRecovery')
+    setLoading(false)
 
     setMessage('Password updated successfully.')
   }
