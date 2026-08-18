@@ -234,9 +234,6 @@ export default function App() {
             <Stack gap={4}>
 
               <Heading size="md">
-                {/* {isSigningUp
-                  ? 'Create an account'
-                  : 'Sign in'} */}
                   {isResettingPassword
                     ? 'Send password reset email link'
                     : isSigningUp
